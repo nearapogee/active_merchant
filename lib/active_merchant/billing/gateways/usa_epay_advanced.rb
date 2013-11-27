@@ -342,7 +342,7 @@ module ActiveMerchant #:nodoc:
       #
       # ==== Required
       # * <tt>:customer_number</tt> -- customer to update
-      # 
+      #
       # ==== Options
       #  * Same as add_customer
       #
@@ -988,9 +988,9 @@ module ActiveMerchant #:nodoc:
         soap.tag! "ns1:addCustomer" do |soap|
           build_token soap, options
           build_customer_data soap, options
-          build_tag soap, :double, 'Amount', amount(options[:amount])
-          build_tag soap, :double, 'Tax', amount(options[:tax])
-          build_tag soap, :string, 'Next', options[:next].strftime("%Y-%m-%d") if options[:next]
+          # build_tag soap, :double, 'Amount', amount(options[:amount])
+          # build_tag soap, :double, 'Tax', amount(options[:tax])
+          # build_tag soap, :string, 'Next', options[:next].strftime("%Y-%m-%d") if options[:next]
         end
       end
 
@@ -1211,6 +1211,9 @@ module ActiveMerchant #:nodoc:
           build_billing_address soap, options
           build_customer_payments soap, options
           build_custom_fields soap, options
+          build_tag soap, :double, 'Amount', amount(options[:amount])
+          build_tag soap, :double, 'Tax', amount(options[:tax])
+          build_tag soap, :string, 'Next', options[:next].strftime("%Y-%m-%d") if options[:next]
         end
       end
 
@@ -1243,7 +1246,7 @@ module ActiveMerchant #:nodoc:
         case
         when payment_method[:method].kind_of?(ActiveMerchant::Billing::CreditCard)
           build_tag soap, :string, 'CardNumber', payment_method[:method].number
-          build_tag soap, :string, 'CardExpiration', 
+          build_tag soap, :string, 'CardExpiration',
             "#{"%02d" % payment_method[:method].month}#{payment_method[:method].year.to_s[-2..-1]}"
           if options[:billing_address]
             build_tag soap, :string, 'AvsStreet', options[:billing_address][:address1]
