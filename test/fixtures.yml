@@ -635,9 +635,9 @@ usa_epay:
 
 # Get credentials here: https://www.usaepay.com/developer/login
 usa_epay_advanced:
-  login: X
-  password: Y
-  software_id: Z
+  login: _959P77Q87n7Soir9y630vceW0623Ic6
+  password: 1111
+  software_id: F2DD83E3
 
 valitor:
   login: WebsiteID

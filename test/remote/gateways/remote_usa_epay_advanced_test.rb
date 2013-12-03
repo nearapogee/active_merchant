@@ -15,7 +15,7 @@ class RemoteUsaEpayAdvancedTest < Test::Unit::TestCase
     @gateway = UsaEpayAdvancedGateway.new(fixtures(:usa_epay_advanced))
 
     @amount = 2111
-    
+
     @credit_card = ActiveMerchant::Billing::CreditCard.new(
       :number => '4000100011112224',
       :month => 9,
@@ -43,13 +43,13 @@ class RemoteUsaEpayAdvancedTest < Test::Unit::TestCase
       :first_name => "Fred",
       :last_name => "Flintstone"
     )
-    
+
     cc_method = [
-      {:name => "My CC", :sort => 5, :method => @credit_card}, 
+      {:name => "My CC", :sort => 5, :method => @credit_card},
       {:name => "Other CC", :sort => 12, :method => @credit_card}
     ]
 
-    @options = { 
+    @options = {
       :client_ip => '127.0.0.1',
       :billing_address => address,
     }
@@ -103,12 +103,12 @@ class RemoteUsaEpayAdvancedTest < Test::Unit::TestCase
     }
 
     payment_methods = [
-      { 
+      {
         :name => "My Visa", # optional
         :sort => 2, # optional
         :method => @credit_card
       },
-      { 
+      {
         :name => "My Checking",
         :method => @check
       }
@@ -116,7 +116,7 @@ class RemoteUsaEpayAdvancedTest < Test::Unit::TestCase
   end
 
   # Standard Gateway ==================================================
-  
+
   def test_purchase
     assert response = @gateway.purchase(@amount, @credit_card, @options)
     assert_equal 'A', response.params['run_sale_return']['result_code']
@@ -136,7 +136,7 @@ class RemoteUsaEpayAdvancedTest < Test::Unit::TestCase
 
   def test_void
     assert purchase = @gateway.purchase(@amount, @credit_card, @options.dup)
-    
+
     assert credit = @gateway.void(purchase.authorization, @options)
     assert_equal 'true', credit.params['void_transaction_return']
   end
@@ -167,7 +167,7 @@ class RemoteUsaEpayAdvancedTest < Test::Unit::TestCase
     assert_failure response
     assert_equal 'Invalid software ID', response.message
   end
-  
+
   # Customer ==========================================================
 
   def test_add_customer
@@ -178,7 +178,7 @@ class RemoteUsaEpayAdvancedTest < Test::Unit::TestCase
   def test_update_customer
     response = @gateway.add_customer(@options.merge(@customer_options))
     customer_number = response.params['add_customer_return']
-    
+
     @options.merge!(@update_customer_options.merge!(:customer_number => customer_number))
     response = @gateway.update_customer(@options)
     assert response.params['update_customer_return']
@@ -198,7 +198,7 @@ class RemoteUsaEpayAdvancedTest < Test::Unit::TestCase
   def test_add_customer_payment_method
     response = @gateway.add_customer(@options.merge(@customer_options))
     customer_number = response.params['add_customer_return']
-    
+
     @options.merge!(:customer_number => customer_number).merge!(@add_payment_options)
     response = @gateway.add_customer_payment_method(@options)
     assert response.params['add_customer_payment_method_return']
@@ -207,7 +207,7 @@ class RemoteUsaEpayAdvancedTest < Test::Unit::TestCase
   def test_add_customer_payment_method_verify
     response = @gateway.add_customer(@options.merge(@customer_options))
     customer_number = response.params['add_customer_return']
-    
+
     @add_payment_options[:payment_method][:method] = @bad_credit_card
     @options.merge!(:customer_number => customer_number, :verify => true).merge!(@add_payment_options)
     response = @gateway.add_customer_payment_method(@options)
@@ -217,7 +217,7 @@ class RemoteUsaEpayAdvancedTest < Test::Unit::TestCase
   def test_get_customer_payment_methods
     response = @gateway.add_customer(@options.merge(@customer_options))
     customer_number = response.params['add_customer_return']
-    
+
     response = @gateway.get_customer_payment_methods(:customer_number => customer_number)
     assert response.params['get_customer_payment_methods_return']['item']
   end
@@ -233,15 +233,23 @@ class RemoteUsaEpayAdvancedTest < Test::Unit::TestCase
     assert response.params['get_customer_payment_method_return']
   end
 
+  def test_get_customer_history
+    response = @gateway.add_customer(@options.merge(@customer_options))
+    customer_number = response.params["add_customer_return"]
+
+    response = @gateway.get_customer_history(:customer_number => customer_number)
+    assert response.params['get_customer_history_return']
+  end
+
   def test_update_customer_payment_method
     response = @gateway.add_customer(@options.merge(@customer_options))
     customer_number = response.params['add_customer_return']
-    
+
     @options.merge!(:customer_number => customer_number).merge!(@add_payment_options)
     response = @gateway.add_customer_payment_method(@options)
     payment_method_id = response.params['add_customer_payment_method_return']
 
-    update_payment_options = @add_payment_options[:payment_method].merge(:method_id => payment_method_id, 
+    update_payment_options = @add_payment_options[:payment_method].merge(:method_id => payment_method_id,
                                                                          :name => "Updated Card.")
 
     response = @gateway.update_customer_payment_method(update_payment_options)
@@ -251,7 +259,7 @@ class RemoteUsaEpayAdvancedTest < Test::Unit::TestCase
   def test_delete_customer_payment_method
     response = @gateway.add_customer(@options.merge(@customer_options))
     customer_number = response.params['add_customer_return']
-    
+
     @options.merge!(:customer_number => customer_number).merge!(@add_payment_options)
     response = @gateway.add_customer_payment_method(@options)
     id = response.params['add_customer_payment_method_return']
@@ -263,7 +271,7 @@ class RemoteUsaEpayAdvancedTest < Test::Unit::TestCase
   def test_delete_customer
     response = @gateway.add_customer(@options.merge(@customer_options))
     customer_number = response.params['add_customer_return']
-    
+
     response = @gateway.delete_customer(:customer_number => customer_number)
     assert response.params['delete_customer_return']
   end
@@ -428,10 +436,10 @@ class RemoteUsaEpayAdvancedTest < Test::Unit::TestCase
     response = @gateway.run_sale(@options.merge(@run_sale_options))
     reference_number = response.params['run_sale_return']['ref_num']
 
-    response = @gateway.get_transaction_custom(:reference_number => reference_number, 
+    response = @gateway.get_transaction_custom(:reference_number => reference_number,
                                                :fields => ['Response.StatusCode', 'Response.Status'])
     assert response.params['get_transaction_custom_return']
-    response = @gateway.get_transaction_custom(:reference_number => reference_number, 
+    response = @gateway.get_transaction_custom(:reference_number => reference_number,
                                                :fields => ['Response.StatusCode'])
     assert response.params['get_transaction_custom_return']
   end
