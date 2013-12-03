@@ -433,6 +433,21 @@ module ActiveMerchant #:nodoc:
         commit(__method__, request)
       end
 
+      # Retrieve a customers transaction history.
+      #
+      # ==== Required
+      # * <tt>:customer_number</tt>
+      #
+      # ==== Response
+      # * <tt>#message</tt> -- Hash of transactions made for this customer.
+      #
+      def get_customer_history(options={})
+        requires! options, :customer_number
+
+        request = build_request(__method__, options)
+        commit(__method__, request)
+      end
+
       # Update a customer payment method.
       #
       # ==== Required
@@ -1038,6 +1053,13 @@ module ActiveMerchant #:nodoc:
 
       def build_get_customer_payment_methods(soap, options)
         build_customer(soap, options, 'getCustomerPaymentMethods')
+      end
+
+      def build_get_customer_history(soap, options)
+        soap.tag! 'ns1:getCustomerHistory' do |soap|
+          build_token soap, options
+          build_tag soap, :integer, 'CustNum', options[:customer_number]
+        end
       end
 
       def build_update_customer_payment_method(soap, options)
