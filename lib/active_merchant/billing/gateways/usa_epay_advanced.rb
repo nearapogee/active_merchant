@@ -342,12 +342,59 @@ module ActiveMerchant #:nodoc:
       #
       # ==== Required
       # * <tt>:customer_number</tt> -- customer to update
-      # 
+      #
       # ==== Options
       #  * Same as add_customer
       #
       def update_customer(options={})
         requires! options, :customer_number
+
+        request = build_request(__method__, options)
+        commit(__method__, request)
+      end
+
+      # Update a customer by replacing certain fields with new data.
+      #
+      # ==== Required
+      # * <tt>:customer_number</tt> -- customer to update
+      # * <tt>:fields</tt> -- An array of Field/Value pairs in array format (['Field', 'Value'])
+      #
+      # ==== Possible Fields
+      #  * FirstName
+      #  * LastName
+      #  * CustomerID
+      #  * Company
+      #  * Address
+      #  * Address2
+      #  * City
+      #  * State
+      #  * Zip
+      #  * Country
+      #  * Phone
+      #  * Fax
+      #  * Email
+      #  * URL
+      #  * ReceiptNote
+      #  * SendReceipt
+      #  * Notes
+      #  * Description
+      #  * OrderID
+      #  * Enabled
+      #  * Schedule
+      #  * Next
+      #  * NumLeft
+      #  * Amount
+      #  * CustomData
+      #  * Source
+      #  * User
+      #  * CardNumber
+      #  * CardExp
+      #  * Account Number
+      #  * Routing Number
+      #  * CheckFormat or RecordType
+      #
+      def quick_update_customer(options={})
+        requires! options, :customer_number, :fields
 
         request = build_request(__method__, options)
         commit(__method__, request)
@@ -428,6 +475,21 @@ module ActiveMerchant #:nodoc:
       #
       def get_customer_payment_method(options={})
         requires! options, :customer_number, :method_id
+
+        request = build_request(__method__, options)
+        commit(__method__, request)
+      end
+
+      # Retrieve a customers transaction history.
+      #
+      # ==== Required
+      # * <tt>:customer_number</tt>
+      #
+      # ==== Response
+      # * <tt>#message</tt> -- Hash of transactions made for this customer.
+      #
+      def get_customer_history(options={})
+        requires! options, :customer_number
 
         request = build_request(__method__, options)
         commit(__method__, request)
@@ -988,9 +1050,9 @@ module ActiveMerchant #:nodoc:
         soap.tag! "ns1:addCustomer" do |soap|
           build_token soap, options
           build_customer_data soap, options
-          build_tag soap, :double, 'Amount', amount(options[:amount])
-          build_tag soap, :double, 'Tax', amount(options[:tax])
-          build_tag soap, :string, 'Next', options[:next].strftime("%Y-%m-%d") if options[:next]
+          # build_tag soap, :double, 'Amount', amount(options[:amount])
+          # build_tag soap, :double, 'Tax', amount(options[:tax])
+          # build_tag soap, :string, 'Next', options[:next].strftime("%Y-%m-%d") if options[:next]
         end
       end
 
@@ -1004,6 +1066,24 @@ module ActiveMerchant #:nodoc:
 
       def build_update_customer(soap, options)
         build_customer(soap, options, 'updateCustomer', true)
+      end
+
+      def build_quick_update_customer(soap, options)
+        soap.tag! "ns1:quickUpdateCustomer" do |soap|
+          build_token soap, options
+          build_tag soap, :integer, 'CustNum', options[:customer_number]
+          if options[:fields].respond_to?(:each)
+            soap.UpdateData "SOAP-ENC:arrayType" => "ns1:FieldValue[#{options[:fields].length}]",
+              "xsi:type" => "ns1:FieldValueArray" do |soap|
+              options[:fields].each do |(field, value)|
+                soap.tag! "item", "xsi:type" => "ns1:FieldValue" do |soap|
+                  build_tag soap, :string, 'Field', field
+                  build_tag soap, :string, 'Value', value
+                end
+              end
+            end
+          end
+        end
       end
 
       def build_enable_customer(soap, options)
@@ -1038,6 +1118,13 @@ module ActiveMerchant #:nodoc:
 
       def build_get_customer_payment_methods(soap, options)
         build_customer(soap, options, 'getCustomerPaymentMethods')
+      end
+
+      def build_get_customer_history(soap, options)
+        soap.tag! 'ns1:getCustomerHistory' do |soap|
+          build_token soap, options
+          build_tag soap, :integer, 'CustNum', options[:customer_number]
+        end
       end
 
       def build_update_customer_payment_method(soap, options)
@@ -1211,6 +1298,9 @@ module ActiveMerchant #:nodoc:
           build_billing_address soap, options
           build_customer_payments soap, options
           build_custom_fields soap, options
+          build_tag soap, :double, 'Amount', amount(options[:amount]) if options[:amount]
+          build_tag soap, :double, 'Tax', amount(options[:tax]) if options[:tax]
+          build_tag soap, :string, 'Next', options[:next].strftime("%Y-%m-%d") if options[:next]
         end
       end
 
@@ -1243,7 +1333,7 @@ module ActiveMerchant #:nodoc:
         case
         when payment_method[:method].kind_of?(ActiveMerchant::Billing::CreditCard)
           build_tag soap, :string, 'CardNumber', payment_method[:method].number
-          build_tag soap, :string, 'CardExpiration', 
+          build_tag soap, :string, 'CardExpiration',
             "#{"%02d" % payment_method[:method].month}#{payment_method[:method].year.to_s[-2..-1]}"
           if options[:billing_address]
             build_tag soap, :string, 'AvsStreet', options[:billing_address][:address1]
