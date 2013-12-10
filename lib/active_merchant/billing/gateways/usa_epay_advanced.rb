@@ -1073,7 +1073,7 @@ module ActiveMerchant #:nodoc:
           build_token soap, options
           build_tag soap, :integer, 'CustNum', options[:customer_number]
           if options[:fields].respond_to?(:each)
-            soap.UpdateData "SOAP-ENC:arrayType" => "nsi:FieldValue[#{options[:fields].length}]",
+            soap.UpdateData "SOAP-ENC:arrayType" => "ns1:FieldValue[#{options[:fields].length}]",
               "xsi:type" => "ns1:FieldValueArray" do |soap|
               options[:fields].each do |(field, value)|
                 soap.tag! "item", "xsi:type" => "ns1:FieldValueArray" do |soap|
