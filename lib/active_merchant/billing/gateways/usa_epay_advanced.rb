@@ -353,6 +353,53 @@ module ActiveMerchant #:nodoc:
         commit(__method__, request)
       end
 
+      # Update a customer by replacing certain fields with new data.
+      #
+      # ==== Required
+      # * <tt>:customer_number</tt> -- customer to update
+      # * <tt>:fields</tt> -- An array of Field/Value pairs in array format (['Field', 'Value'])
+      #
+      # ==== Possible Fields
+      #  * FirstName
+      #  * LastName
+      #  * CustomerID
+      #  * Company
+      #  * Address
+      #  * Address2
+      #  * City
+      #  * State
+      #  * Zip
+      #  * Country
+      #  * Phone
+      #  * Fax
+      #  * Email
+      #  * URL
+      #  * ReceiptNote
+      #  * SendReceipt
+      #  * Notes
+      #  * Description
+      #  * OrderID
+      #  * Enabled
+      #  * Schedule
+      #  * Next
+      #  * NumLeft
+      #  * Amount
+      #  * CustomData
+      #  * Source
+      #  * User
+      #  * CardNumber
+      #  * CardExp
+      #  * Account Number
+      #  * Routing Number
+      #  * CheckFormat or RecordType
+      #
+      def quick_update_customer(options={})
+        requires! options, :customer_number, :fields
+
+        request = build_request(__method__, options)
+        commit(__method__, request)
+      end
+
       # Enable a customer for recurring billing.
       #
       # Note: Customer does not need to have all recurring paramerters to succeed.
@@ -1019,6 +1066,24 @@ module ActiveMerchant #:nodoc:
 
       def build_update_customer(soap, options)
         build_customer(soap, options, 'updateCustomer', true)
+      end
+
+      def build_quick_update_customer(soap, options)
+        soap.tag! "ns1:quickUpdateCustomer" do |soap|
+          build_token soap, options
+          build_tag soap, :integer, 'CustNum', options[:customer_number]
+          if options[:fields].respond_to?(:each)
+            soap.UpdateData "SOAP-ENC:arrayType" => "nsi:FieldValue[#{options[:fields].length}]",
+              "xsi:type" => "ns1:FieldValueArray" do |soap|
+              options[:fields].each do |(field, value)|
+                soap.tag! "item", "xsi:type" => "ns1:FieldValueArray" do |soap|
+                  build_tag soap, :string, 'Field', field
+                  build_tag soap, :string, 'Value', value
+                end
+              end
+            end
+          end
+        end
       end
 
       def build_enable_customer(soap, options)
