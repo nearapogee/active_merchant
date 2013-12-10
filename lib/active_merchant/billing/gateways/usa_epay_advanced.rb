@@ -1076,7 +1076,7 @@ module ActiveMerchant #:nodoc:
             soap.UpdateData "SOAP-ENC:arrayType" => "ns1:FieldValue[#{options[:fields].length}]",
               "xsi:type" => "ns1:FieldValueArray" do |soap|
               options[:fields].each do |(field, value)|
-                soap.tag! "item", "xsi:type" => "ns1:FieldValueArray" do |soap|
+                soap.tag! "item", "xsi:type" => "ns1:FieldValue" do |soap|
                   build_tag soap, :string, 'Field', field
                   build_tag soap, :string, 'Value', value
                 end
